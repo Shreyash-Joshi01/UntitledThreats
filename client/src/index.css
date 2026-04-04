@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface font-body antialiased selection:bg-primary/30 selection:text-primary;
+    overflow-x: hidden;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-surface/80 backdrop-blur-xl rounded-2xl shadow-glass;
+    border: 1px solid rgba(226, 232, 240, 0.8); 
+  }
+
+  /* Skeleton loader shimmer */
+  .skeleton {
+    @apply bg-surface-container-high rounded-lg relative overflow-hidden;
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s infinite;
+  }
+
+  /* Status badge variants */
+  .badge-approved {
+    @apply bg-primary/10 text-primary text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .badge-flagged {
+    @apply bg-warning/10 text-warning text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .badge-rejected {
+    @apply bg-error/10 text-error text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .badge-pending {
+    @apply bg-aqi-bg text-aqi-severe text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+
+  /* Bottom nav safe area */
+  .bottom-nav-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Progress ring */
+  .progress-ring circle {
+    transition: stroke-dashoffset 0.7s ease;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+  }
+
+  /* Gauge bar */
+  .gauge-fill {
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Custom Webkit Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #16A34A; }
+
+/* Smooth tab content transitions */
+.tab-content-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.tab-content-enter-active {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Custom scrollbar for the dashboard panels */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 4px; }

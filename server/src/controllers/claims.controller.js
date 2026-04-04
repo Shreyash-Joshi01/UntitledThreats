@@ -98,13 +98,39 @@ export async function initiateClaims(event) {
 
     if (count >= CLAIM_RULES.max_claims_per_4_weeks) continue
 
-    // Rule-based fraud score (Phase 1)
-    const fraud_score = count >= 1 ? 35 : 12
-    const status = fraud_score >= FRAUD_THRESHOLDS.auto_reject
-      ? 'rejected'
-      : fraud_score >= FRAUD_THRESHOLDS.soft_hold
-        ? 'flagged'
-        : 'auto_approved'
+    // Fraud score from ML Service
+    let fraud_score = count >= 1 ? 35 : 12
+    let status = fraud_score >= FRAUD_THRESHOLDS.auto_reject ? 'rejected' : fraud_score >= FRAUD_THRESHOLDS.soft_hold ? 'flagged' : 'auto_approved'
+    let fraud_reason = 'Profile looks typical'
+    let fraud_flags = fraud_score > 30 ? ['claim_frequency'] : []
+
+    try {
+      const mlRes = await fetch(`${process.env.ML_SERVICE_URL}/ml/fraud/score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          worker_id: worker.id,
+          event_id: event.id,
+          motion_data: {
+            variance: 5.0, // Should come from a mobile SDK
+            is_stationary: 0,
+            network_transitions: 0,
+            claim_freq_30d: count
+          }
+        }),
+        signal: AbortSignal.timeout(3000)
+      })
+
+      if (mlRes.ok) {
+        const mlData = await mlRes.json()
+        fraud_score = mlData.fraud_score
+        status = mlData.decision === 'approved' ? 'auto_approved' : mlData.decision === 'soft_hold' ? 'flagged' : 'rejected'
+        fraud_reason = mlData.reason
+        if (fraud_score >= FRAUD_THRESHOLDS.soft_hold) fraud_flags = ['ml_anomaly', fraud_reason]
+      }
+    } catch (err) {
+      console.warn('ML Service unreachable, using rule-based fraud detection.')
+    }
 
     await supabase.from('claims').insert({
       worker_id: worker.id,
@@ -113,7 +139,7 @@ export async function initiateClaims(event) {
       status,
       payout_amount: event.fixed_payout,
       fraud_score,
-      fraud_flags: fraud_score > 30 ? ['claim_frequency'] : [],
+      fraud_flags,
       resolved_at: status === 'auto_approved' ? new Date().toISOString() : null,
       payout_reference: status === 'auto_approved'
         ? `UPI-MOCK-${Date.now()}-${worker.id.slice(0, 8)}`

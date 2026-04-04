@@ -47,7 +47,7 @@ export default function PolicyCard({ policy, onPolicyUpdate }) {
   }
 
   // Active Policy
-  const endDates = new Date(policy.end_date);
+  const endDates = new Date(policy.coverage_end);
   const now = new Date();
   const daysLeft = Math.max(0, Math.ceil((endDates - now) / (1000 * 60 * 60 * 24)));
   
@@ -73,7 +73,7 @@ export default function PolicyCard({ policy, onPolicyUpdate }) {
           <div className="text-right">
             <p className="text-xs text-on-surface-variant font-medium">Max Payout</p>
             <p className="text-xl font-heading font-bold text-on-surface">
-              ₹{policy.premium_amount * 10} <span className="text-sm font-normal text-on-surface-variant">/wk</span>
+              ₹{policy.max_weekly_payout || 0} <span className="text-sm font-normal text-on-surface-variant">/wk</span>
             </p>
           </div>
         </div>

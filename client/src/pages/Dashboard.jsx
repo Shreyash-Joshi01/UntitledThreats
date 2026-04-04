@@ -197,8 +197,10 @@ export default function Dashboard() {
                   <span className="font-medium capitalize">{data?.worker?.platform || '—'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-on-surface-variant text-sm">Zone / Pin</span>
-                  <span className="font-medium">{data?.worker?.zone_code || '—'}</span>
+                  <span className="text-on-surface-variant text-sm">Zone</span>
+                  <span className="font-medium">
+                    {data?.zone_info?.city ? `${data.zone_info.city} (${data?.worker?.zone_code})` : data?.worker?.zone_code || '—'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-on-surface-variant text-sm">UPI ID</span>

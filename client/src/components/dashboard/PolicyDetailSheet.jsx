@@ -5,7 +5,7 @@ import {
   AlertCircle, Zap, CheckCircle2, IndianRupee, Clock, TrendingUp
 } from 'lucide-react';
 
-export default function PolicyDetailSheet({ open, onClose, policy, worker, payoutTiers }) {
+export default function PolicyDetailSheet({ open, onClose, policy, worker, payoutTiers, premiumData }) {
   if (!policy) return null;
 
   const endDate   = new Date(policy.coverage_end);
@@ -27,21 +27,17 @@ export default function PolicyDetailSheet({ open, onClose, policy, worker, payou
   const claimsPct   = Math.min(100, Math.round((claimsUsed / claimsLimit) * 100));
 
   // ─── Dynamic Premium Model ─────────────────────────────────────────────────
-  const BASE_PREMIUM = 50;
-  const zoneRisk = worker?.zone_risk || 'medium';
+  const BASE_PREMIUM = premiumData?.base_premium || 59;
+  const dynamicPremium = premiumData?.adjusted_premium || premiumData?.weekly_premium || 59;
 
-  const riskAddon =
-    zoneRisk === 'high'   ? { label: 'High-risk zone surcharge', value: 25 } :
-    zoneRisk === 'medium' ? { label: 'Medium-risk zone factor',  value: 9  } :
-                            { label: 'Low-risk zone discount',   value: -5 };
-
-  const forecastAddon = { label: 'Weekly forecast adjustment', value: 0 };
-  const dynamicPremium = BASE_PREMIUM + riskAddon.value + forecastAddon.value;
+  const riskAddon = {
+    label: 'ML Risk adj (Zone/Environment)',
+    value: dynamicPremium - BASE_PREMIUM
+  };
 
   const breakdownRows = [
     { label: 'Base premium',      value: BASE_PREMIUM,        sign: '' },
     { label: riskAddon.label,     value: riskAddon.value,     sign: riskAddon.value >= 0 ? '+' : '' },
-    { label: forecastAddon.label, value: forecastAddon.value, sign: '+' },
   ];
 
   return (

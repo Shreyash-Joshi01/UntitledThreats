@@ -3,7 +3,7 @@ import { Shield, ShieldAlert, Calendar, CheckCircle2, ChevronRight } from 'lucid
 import { policyAPI } from '../../services/api';
 import PolicyDetailSheet from './PolicyDetailSheet';
 
-export default function PolicyCard({ policy, onPolicyUpdate, worker, payoutTiers }) {
+export default function PolicyCard({ policy, onPolicyUpdate, worker, payoutTiers, premiumData }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const isActive = policy?.status === 'active';
   const hasPolicy = !!policy;
@@ -126,6 +126,7 @@ export default function PolicyCard({ policy, onPolicyUpdate, worker, payoutTiers
         policy={policy}
         worker={worker}
         payoutTiers={payoutTiers}
+        premiumData={premiumData}
       />
     </>
   );

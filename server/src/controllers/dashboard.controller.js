@@ -2,6 +2,9 @@ import supabase from '../config/supabase.js'
 import { ok, fail } from '../utils/response.js'
 import { pollWeather, pollAQI, getCurrentEnvironment } from '../services/weather.service.js'
 import { PAYOUT_TIERS, WEEKLY_PREMIUM_BANDS } from '../utils/constants.js'
+import 'dotenv/config'
+
+const ML_URL = process.env.ML_SERVICE_URL
 
 export async function getDashboardSummary(req, res) {
   try {
@@ -88,6 +91,32 @@ export async function getDashboardSummary(req, res) {
     // 9. Current Environment Data (live from APIs)
     const currentEnv = await getCurrentEnvironment(worker.zone_code)
 
+    // ML Premium Fetch
+    let mlPremiumData = null;
+    try {
+      const month = new Date().getMonth();
+      const season = (month >= 5 && month <= 8) ? 'monsoon'
+        : (month >= 10 || month <= 0) ? 'smog'
+        : 'normal';
+
+      const mlRes = await fetch(`${ML_URL}/ml/premium/calculate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          zone_code: worker.zone_code,
+          weekly_hours: parseFloat(worker.weekly_hours || 40),
+          season,
+          claim_history: worker.claim_count || 0
+        }),
+        signal: AbortSignal.timeout(5000)
+      })
+      if (mlRes.ok) {
+        mlPremiumData = await mlRes.json()
+      }
+    } catch {
+      // ML service down — fall back
+    }
+
     ok(res, {
       worker,
       policy: policy || null,
@@ -100,9 +129,11 @@ export async function getDashboardSummary(req, res) {
       live_events: liveEvents,
       current_env: currentEnv,
       zone_info: zoneData || null,
-      premium: {
+      premium: mlPremiumData || {
         band_key: bandKey,
         weekly_premium: premiumBand.premium,
+        adjusted_premium: premiumBand.premium,
+        base_premium: premiumBand.premium,
         max_weekly_payout: premiumBand.maxPayout,
       },
       payout_tiers: PAYOUT_TIERS,

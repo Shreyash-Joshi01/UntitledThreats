@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Shield, Calendar, CloudRain, ThermometerSun,
-  AlertCircle, Zap, CheckCircle2, IndianRupee, Clock
+  AlertCircle, Zap, CheckCircle2, IndianRupee, Clock, TrendingUp
 } from 'lucide-react';
 
 export default function PolicyDetailSheet({ open, onClose, policy, worker, payoutTiers }) {
@@ -25,6 +25,24 @@ export default function PolicyDetailSheet({ open, onClose, policy, worker, payou
   const claimsUsed  = policy.claims_this_period ?? 0;
   const claimsLimit = 2;
   const claimsPct   = Math.min(100, Math.round((claimsUsed / claimsLimit) * 100));
+
+  // ─── Dynamic Premium Model ─────────────────────────────────────────────────
+  const BASE_PREMIUM = 50;
+  const zoneRisk = worker?.zone_risk || 'medium';
+
+  const riskAddon =
+    zoneRisk === 'high'   ? { label: 'High-risk zone surcharge', value: 25 } :
+    zoneRisk === 'medium' ? { label: 'Medium-risk zone factor',  value: 9  } :
+                            { label: 'Low-risk zone discount',   value: -5 };
+
+  const forecastAddon = { label: 'Weekly forecast adjustment', value: 0 };
+  const dynamicPremium = BASE_PREMIUM + riskAddon.value + forecastAddon.value;
+
+  const breakdownRows = [
+    { label: 'Base premium',      value: BASE_PREMIUM,        sign: '' },
+    { label: riskAddon.label,     value: riskAddon.value,     sign: riskAddon.value >= 0 ? '+' : '' },
+    { label: forecastAddon.label, value: forecastAddon.value, sign: '+' },
+  ];
 
   return (
     <AnimatePresence>
@@ -133,7 +151,7 @@ export default function PolicyDetailSheet({ open, onClose, policy, worker, payou
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-surface-container rounded-xl p-3">
                     <p className="text-[10px] text-on-surface-variant mb-1">Weekly premium</p>
-                    <p className="text-sm font-semibold text-on-surface">₹{policy.weekly_premium || 59}</p>
+                    <p className="text-sm font-semibold text-on-surface">₹{dynamicPremium}</p>
                   </div>
                   <div className="bg-surface-container rounded-xl p-3">
                     <p className="text-[10px] text-on-surface-variant mb-1">Zone risk</p>
@@ -153,6 +171,38 @@ export default function PolicyDetailSheet({ open, onClose, policy, worker, payou
                       {worker?.zone_code || '—'}
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* ── Premium Breakdown Card ── */}
+              <div className="rounded-xl border border-primary/20 overflow-hidden">
+                <div className="bg-primary/10 px-3 py-2 flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wider">
+                    Dynamic Pricing Model
+                  </p>
+                </div>
+                <div className="bg-surface-container px-3 py-2 space-y-2">
+                  {breakdownRows.map((row, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <p className="text-[11px] text-on-surface-variant">{row.label}</p>
+                      <p className={`text-[11px] font-semibold ${
+                        row.value < 0 ? 'text-success' :
+                        i === 0 ? 'text-on-surface' : 'text-warning'
+                      }`}>
+                        {i > 0 ? (row.value >= 0 ? '+' : '') : ''}₹{Math.abs(row.value)}
+                      </p>
+                    </div>
+                  ))}
+                  <div className="border-t border-outline-variant/40 pt-2 flex justify-between items-center">
+                    <p className="text-xs font-bold text-on-surface">Total / week</p>
+                    <p className="text-sm font-bold text-primary">₹{dynamicPremium}</p>
+                  </div>
+                </div>
+                <div className="bg-surface-container/50 px-3 py-1.5 border-t border-outline-variant/20">
+                  <p className="text-[10px] text-on-surface-variant">
+                    Premium adjusts weekly based on zone flood history, risk classification, and weather forecasts.
+                  </p>
                 </div>
               </div>
 

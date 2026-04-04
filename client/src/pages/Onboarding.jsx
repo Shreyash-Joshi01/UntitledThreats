@@ -132,7 +132,7 @@ export default function Onboarding() {
         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 border border-primary/20 shadow-glass">
           <Shield className="w-8 h-8 text-primary" />
         </div>
-        <h1 className="text-3xl font-heading font-extrabold text-on-surface">GigShield</h1>
+        <h1 className="text-3xl font-heading font-extrabold text-on-surface">Untitled Threats</h1>
         <p className="text-on-surface-variant text-sm font-body">Security for the gig economy.</p>
       </div>
 

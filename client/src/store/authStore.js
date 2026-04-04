@@ -12,7 +12,7 @@ export const useAuthStore = create(
       logout: () => set({ user: null, token: null }),
     }),
     {
-      name: 'gigshield-auth-storage', // name of item in localStorage (must be unique)
+      name: 'untitled-threats-auth-storage', // name of item in localStorage (must be unique)
       storage: createJSONStorage(() => localStorage), // (optional) by default the 'localStorage' is used
     }
   )

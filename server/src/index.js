@@ -32,5 +32,5 @@ app.use(errorMiddleware)
 
 const PORT = process.env.PORT || 4000
 app.listen(PORT, () => {
-  console.log(`🚀 GigShield server running on port ${PORT}`)
+  console.log(`🚀 Untitled Threats server running on port ${PORT}`)
 })

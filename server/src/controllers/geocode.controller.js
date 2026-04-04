@@ -9,7 +9,7 @@ export async function reverseGeocode(req, res) {
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'GigShield/1.0' // Nominatim requires a User-Agent
+        'User-Agent': 'Untitled Threats/1.0' // Nominatim requires a User-Agent
       }
     })
     

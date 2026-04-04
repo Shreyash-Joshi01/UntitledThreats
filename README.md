@@ -394,7 +394,7 @@ For large-scale coordinated attacks (e.g., a 500-partner fraud ring), The Platfo
 ## 11. Repository Structure
  
 ```
-gigshield/
+Untitled Threats/
 │
 ├── client/                  # React.js PWA (worker-facing)
 │   ├── src/
@@ -440,21 +440,21 @@ gigshield/
  
 ## 12. Regulatory Positioning
  
-GigShield is designed to operate **in partnership with a licensed insurer**, not as a standalone insurance product. This distinction is intentional and non-negotiable.
+Untitled Threats is designed to operate **in partnership with a licensed insurer**, not as a standalone insurance product. This distinction is intentional and non-negotiable.
  
 ### Why this matters
 Offering income protection with automated weekly premiums and payouts constitutes insurance under Indian law and falls under IRDAI jurisdiction. An unlicensed platform cannot legally underwrite this product, regardless of how it is framed technically.
  
-### How GigShield is positioned
-GigShield is a **parametric trigger and disbursement platform** — the technology layer that handles:
+### How Untitled Threats is positioned
+Untitled Threats is a **parametric trigger and disbursement platform** — the technology layer that handles:
 - Real-time event monitoring and threshold detection
 - Fraud scoring and claim validation logic
 - Worker onboarding, UPI payout disbursement, and dashboard
  
-The **underwriting risk is carried by a licensed insurer partner** (target: a microinsurance or general insurer with a gig-economy portfolio). GigShield operates as a technology service provider / insurance distribution platform under the insurer's license — a model already established by players like Digit, Acko, and several IRDAI Sandbox-approved fintechs.
+The **underwriting risk is carried by a licensed insurer partner** (target: a microinsurance or general insurer with a gig-economy portfolio). Untitled Threats operates as a technology service provider / insurance distribution platform under the insurer's license — a model already established by players like Digit, Acko, and several IRDAI Sandbox-approved fintechs.
  
 ### Phase 1 stance
-For the purposes of this prototype, GigShield operates as a **proof-of-concept under IRDAI's Regulatory Sandbox** framework, which permits limited-scale testing of innovative insurance products without full licensing. Any production deployment requires a formal insurer partnership before launch.
+For the purposes of this prototype, Untitled Threats operates as a **proof-of-concept under IRDAI's Regulatory Sandbox** framework, which permits limited-scale testing of innovative insurance products without full licensing. Any production deployment requires a formal insurer partnership before launch.
  
 ---
  

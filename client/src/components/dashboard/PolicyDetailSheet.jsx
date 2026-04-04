@@ -2,36 +2,33 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Shield, Calendar, CloudRain, ThermometerSun,
-  AlertCircle, Zap, CheckCircle2, IndianRupee
+  AlertCircle, Zap, CheckCircle2, IndianRupee, Clock
 } from 'lucide-react';
 
 export default function PolicyDetailSheet({ open, onClose, policy, worker, payoutTiers }) {
   if (!policy) return null;
 
-  const endDate = new Date(policy.coverage_end);
+  const endDate   = new Date(policy.coverage_end);
   const startDate = new Date(policy.coverage_start);
-  const now = new Date();
-  const daysLeft = Math.max(0, Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)));
+  const now       = new Date();
+  const daysLeft  = Math.max(0, Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)));
+  const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+  const daysUsed  = totalDays - daysLeft;
+  const progressPct = Math.min(100, Math.round((daysUsed / totalDays) * 100));
   const isExpiringSoon = daysLeft <= 3;
 
   const riskColor =
-    worker?.zone_risk === 'high' ? 'text-error' :
+    worker?.zone_risk === 'high'   ? 'text-error' :
     worker?.zone_risk === 'medium' ? 'text-warning' :
     'text-success';
 
-  const tierIcons = {
-    heavy_rain_60: <CloudRain className="w-4 h-4 text-blue-500" />,
-    heavy_rain_90: <CloudRain className="w-4 h-4 text-blue-700" />,
-    extreme_heat:  <ThermometerSun className="w-4 h-4 text-orange-500" />,
-    severe_aqi:    <AlertCircle className="w-4 h-4 text-purple-500" />,
-    flash_flood:   <Zap className="w-4 h-4 text-indigo-500" />,
-    curfew:        <AlertCircle className="w-4 h-4 text-red-500" />,
-  };
+  const claimsUsed  = policy.claims_this_period ?? 0;
+  const claimsLimit = 2;
+  const claimsPct   = Math.min(100, Math.round((claimsUsed / claimsLimit) * 100));
 
   return (
     <AnimatePresence>
       {open && (
-        /* Full-screen overlay that flexes children to bottom-center */
         <div className="fixed inset-0 z-50 flex items-end justify-center">
 
           {/* Backdrop */}
@@ -43,7 +40,7 @@ export default function PolicyDetailSheet({ open, onClose, policy, worker, payou
             onClick={onClose}
           />
 
-          {/* Sheet — slides up, capped at mobile width */}
+          {/* Sheet */}
           <motion.div
             className="relative w-full max-w-[430px] bg-background rounded-t-3xl max-h-[90vh] overflow-y-auto"
             initial={{ y: '100%' }}
@@ -59,10 +56,7 @@ export default function PolicyDetailSheet({ open, onClose, policy, worker, payou
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-outline-variant/30">
               <h2 className="font-heading font-bold text-lg text-on-surface">Policy Details</h2>
-              <button
-                onClick={onClose}
-                className="p-1.5 rounded-full hover:bg-surface-variant transition-colors"
-              >
+              <button onClick={onClose} className="p-1.5 rounded-full hover:bg-surface-variant transition-colors">
                 <X className="w-5 h-5 text-on-surface-variant" />
               </button>
             </div>
@@ -115,6 +109,22 @@ export default function PolicyDetailSheet({ open, onClose, policy, worker, payou
                 </div>
               </div>
 
+              {/* Coverage progress bar */}
+              <div className="bg-surface-container rounded-xl p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-[10px] text-on-surface-variant flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> Coverage period used
+                  </p>
+                  <p className="text-[10px] font-semibold text-on-surface">{daysUsed} / {totalDays} days</p>
+                </div>
+                <div className="w-full h-1.5 bg-outline-variant/30 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all duration-500"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+              </div>
+
               {/* Coverage summary */}
               <div>
                 <p className="text-xs text-on-surface-variant uppercase tracking-wider font-medium mb-2">
@@ -132,53 +142,43 @@ export default function PolicyDetailSheet({ open, onClose, policy, worker, payou
                     </p>
                   </div>
                   <div className="bg-surface-container rounded-xl p-3">
-                    <p className="text-[10px] text-on-surface-variant mb-1">Claims this period</p>
-                    <p className="text-sm font-semibold text-on-surface">
-                      {policy.claims_this_period ?? 0} / 2
-                    </p>
-                  </div>
-                  <div className="bg-surface-container rounded-xl p-3">
                     <p className="text-[10px] text-on-surface-variant mb-1">UPI linked</p>
                     <p className={`text-sm font-semibold ${worker?.upi_id ? 'text-success' : 'text-error'}`}>
                       {worker?.upi_id ? 'Yes' : 'Not linked'}
                     </p>
                   </div>
+                  <div className="bg-surface-container rounded-xl p-3">
+                    <p className="text-[10px] text-on-surface-variant mb-1">Zone</p>
+                    <p className="text-sm font-semibold text-on-surface font-mono">
+                      {worker?.zone_code || '—'}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* Payout tiers */}
-              {payoutTiers && Object.keys(payoutTiers).length > 0 && (
-                <div>
-                  <p className="text-xs text-on-surface-variant uppercase tracking-wider font-medium mb-2 flex items-center gap-1">
-                    <IndianRupee className="w-3 h-3" /> What triggers a payout
-                  </p>
-                  <div className="space-y-2">
-                    {Object.entries(payoutTiers).map(([key, tier]) => {
-                      const label = typeof tier === 'object'
-                        ? tier.label
-                        : key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                      const payout = typeof tier === 'object' ? tier.payout : tier;
-                      return (
-                        <div key={key} className="flex items-center justify-between p-3 bg-surface-container rounded-xl">
-                          <div className="flex items-center gap-2">
-                            <div className="bg-surface p-1.5 rounded-lg">
-                              {tierIcons[key] || <AlertCircle className="w-4 h-4 text-on-surface-variant" />}
-                            </div>
-                            <p className="text-sm text-on-surface">{label}</p>
-                          </div>
-                          <p className="text-sm font-bold text-primary">₹{payout}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
+              {/* Claims usage bar */}
+              <div className="bg-surface-container rounded-xl p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-[10px] text-on-surface-variant">Claims used this period</p>
+                  <p className="text-[10px] font-semibold text-on-surface">{claimsUsed} / {claimsLimit}</p>
                 </div>
-              )}
+                <div className="w-full h-1.5 bg-outline-variant/30 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${claimsUsed >= claimsLimit ? 'bg-error' : 'bg-primary'}`}
+                    style={{ width: `${claimsPct}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-on-surface-variant mt-1.5">
+                  {claimsLimit - claimsUsed} claim{claimsLimit - claimsUsed !== 1 ? 's' : ''} remaining this week
+                </p>
+              </div>
 
               {/* Auto-payout note */}
               <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-xl border border-primary/15">
                 <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                 <p className="text-xs text-on-surface-variant leading-relaxed">
-                  Payouts are <span className="text-on-surface font-medium">fully automatic</span> — no claim form needed. When a trigger is detected in your zone, the amount is credited to your UPI within 10 minutes.
+                  Payouts are <span className="text-on-surface font-medium">fully automatic</span> — no claim form needed.
+                  When a trigger is detected in your zone, the amount is credited to your UPI within 10 minutes.
                 </p>
               </div>
 

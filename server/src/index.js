@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import express from 'express'
 import { corsMiddleware } from './middleware/cors.middleware.js'
 import { errorMiddleware } from './middleware/error.middleware.js'

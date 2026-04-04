@@ -3,8 +3,8 @@ import { useAuthStore } from '../store/authStore';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 
 export async function request(endpoint, options = {}) {
-  const { token } = useAuthStore.getState();
-  
+  const { token, logout } = useAuthStore.getState();
+
   const headers = {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
@@ -15,11 +15,23 @@ export async function request(endpoint, options = {}) {
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+
+    // ✅ Auto-logout on 401 — clears Zustand + localStorage + redirects
+    if (response.status === 401) {
+      console.warn('Token expired — auto logging out');
+      logout(); // clears Zustand store + persisted localStorage
+      window.location.replace('/'); // hard redirect to login
+      return null;
+    }
+
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || data.message || 'Something went wrong');
     return data;
   } catch (error) {
-    console.error(`API Request Failed on ${endpoint}:`, error.message);
+    // Don't re-throw if it was a 401 redirect
+    if (error.message === 'Failed to fetch' || error instanceof SyntaxError) {
+      console.error(`API Request Failed on ${endpoint}:`, error.message);
+    }
     throw error;
   }
 }

@@ -9,6 +9,7 @@ import claimsRoutes from './routes/claims.routes.js'
 import triggersRoutes from './routes/triggers.routes.js'
 import dashboardRoutes from './routes/dashboard.routes.js'
 import geocodeRoutes from './routes/geocode.routes.js'
+import payoutRoutes from './routes/payout.routes.js'
 
 const app = express()
 
@@ -26,6 +27,7 @@ app.use('/api/claims', claimsRoutes)
 app.use('/api/triggers', triggersRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/geocode', geocodeRoutes)
+app.use('/api/payout', payoutRoutes)
 
 app.use(errorMiddleware)
 

@@ -1,10 +1,11 @@
 import express from 'express'
-import { getAdminDashboard, simulateFraud, simulatePremium, simulateRisk } from '../controllers/admin.controller.js'
+import { getAdminDashboard } from '../controllers/admin.controller.js'
+import { requireAuth } from '../middleware/auth.middleware.js'
 
 const router = express.Router()
 
 // GET /api/admin/dashboard
-router.get('/dashboard', getAdminDashboard)
+router.get('/dashboard', requireAuth, getAdminDashboard)
 
 // ML Simulation Proxy Routes
 router.post('/simulate/fraud', simulateFraud)

@@ -59,7 +59,13 @@ export default function Onboarding() {
         const { access_token, user } = res.data;
         if (!access_token) throw new Error('Login failed. Please try again.');
         setSession(user, access_token);
-        navigate('/dashboard');
+        
+        if (user.email === 'admin@gmail.com') {
+          useAuthStore.getState().setAdminAuth(true);
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         // Register: validate worker fields first
         if (!formData.phone || !formData.upi_id || !formData.zone_code || !formData.platform) {

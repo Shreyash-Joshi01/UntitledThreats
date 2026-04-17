@@ -6,30 +6,33 @@ import { useAuthStore } from '../store/authStore';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { authAPI } from '../services/api';
 
 export default function AdminLogin() {
-  const [adminId, setAdminId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const setAdminAuth = useAuthStore((state) => state.setAdminAuth);
+  const setSession = useAuthStore((state) => state.setSession);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    // Mock authentication Check (Prototype logic)
-    setTimeout(() => {
-      if (adminId === 'admin' && password === 'admin123') {
-        setAdminAuth(true);
-        navigate('/admin', { replace: true });
-      } else {
-        setError('Invalid Admin ID or Passcode. Please try again.');
-        setIsLoading(false);
-      }
-    }, 800); // simulate network delay for effect
+    try {
+      const data = await authAPI.login(email, password);
+      // Validated
+      setSession(data.user, data.access_token);
+      setAdminAuth(true);
+      navigate('/admin', { replace: true });
+    } catch (err) {
+      setError(err.message || 'Invalid Email or Passcode. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -54,12 +57,12 @@ export default function AdminLogin() {
         <Card is3D className="p-8 backdrop-blur-md bg-surface-container/80">
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-on-surface-variant ml-1">Admin ID</label>
+              <label className="text-sm font-medium text-on-surface-variant ml-1">Admin Email</label>
               <Input
-                type="text"
-                value={adminId}
-                onChange={(e) => setAdminId(e.target.value)}
-                placeholder="Enter your system ID (e.g., admin)"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your system email (e.g., admin@gmail.com)"
                 className="w-full bg-surface-container-highest border-outline-variant/30 text-on-surface focus:border-primary"
                 autoComplete="off"
               />
@@ -94,7 +97,7 @@ export default function AdminLogin() {
             <Button 
               type="submit" 
               className="w-full shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group"
-              disabled={isLoading || !adminId || !password}
+              disabled={isLoading || !email || !password}
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />

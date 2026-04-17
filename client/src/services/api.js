@@ -50,6 +50,11 @@ export const authAPI = {
 
 export const dashboardAPI = {
   getSummary: () => request('/dashboard/summary'),
+  getAdmin: () => request('/dashboard/admin'),
+};
+
+export const adminAPI = {
+  getDashboard: () => request('/admin/dashboard'),
 };
 
 export const geocodeAPI = {
@@ -94,4 +99,16 @@ export const adminAPI = {
   simulateFraud: (payload) => request('/admin/simulate/fraud', { method: 'POST', body: JSON.stringify(payload) }),
   simulatePremium: (payload) => request('/admin/simulate/premium', { method: 'POST', body: JSON.stringify(payload) }),
   simulateRisk: (payload) => request('/admin/simulate/risk', { method: 'POST', body: JSON.stringify(payload) }),
+export const payoutAPI = {
+  createOrder: (claim_id, amount_inr) => request('/payout/create-order', {
+    method: 'POST', body: JSON.stringify({ claim_id, amount_inr })
+  }),
+  initiate: (claim_id, amount_inr) => request('/payout/initiate', {
+    method: 'POST', body: JSON.stringify({ claim_id, amount_inr })
+  }),
+  verify: (razorpay_order_id, razorpay_payment_id, razorpay_signature, claim_id) =>
+    request('/payout/verify', {
+      method: 'POST',
+      body: JSON.stringify({ razorpay_order_id, razorpay_payment_id, razorpay_signature, claim_id })
+    }),
 };

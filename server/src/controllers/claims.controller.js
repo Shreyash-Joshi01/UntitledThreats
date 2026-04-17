@@ -1,6 +1,7 @@
 import supabase from '../config/supabase.js'
 import { ok, fail } from '../utils/response.js'
 import { FRAUD_THRESHOLDS, CLAIM_RULES } from '../utils/constants.js'
+import { createNotification } from '../services/notifications.service.js'
 
 export async function getClaims(req, res) {
   const { data: worker } = await supabase
@@ -105,6 +106,21 @@ export async function initiateClaims(event) {
     let fraud_flags = fraud_score > 30 ? ['claim_frequency'] : []
 
     try {
+      // Fetch last 20 claims for behavioral risk analysis
+      const { data: claimsHistory } = await supabase
+        .from('claims')
+        .select('initiated_at, payout_amount, status, policies(workers(zone_code))')
+        .eq('worker_id', worker.id)
+        .order('initiated_at', { ascending: false })
+        .limit(20)
+
+      const behavioralHistory = (claimsHistory || []).map(c => ({
+        date: c.initiated_at,
+        amount: c.payout_amount,
+        status: c.status,
+        zone: c.policies?.workers?.zone_code || worker.zone_code,
+      }))
+
       const mlRes = await fetch(`${process.env.ML_SERVICE_URL}/ml/fraud/score`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,13 +128,24 @@ export async function initiateClaims(event) {
           worker_id: worker.id,
           event_id: event.id,
           motion_data: {
-            variance: 5.0, // Should come from a mobile SDK
+            variance: 5.0,
             is_stationary: 0,
             network_transitions: 0,
             claim_freq_30d: count
-          }
+          },
+          // GPS data (worker zone centroid as proxy — real GPS from mobile SDK)
+          lat: null,
+          lon: null,
+          claim_location: null,
+          last_known_location: null,
+          minutes_since_last_ping: 60,
+          // Weather context
+          event_datetime: event.triggered_at,
+          event_type: event.event_type,
+          // Behavioral history
+          claims_history: behavioralHistory,
         }),
-        signal: AbortSignal.timeout(3000)
+        signal: AbortSignal.timeout(5000)
       })
 
       if (mlRes.ok) {
@@ -132,7 +159,7 @@ export async function initiateClaims(event) {
       console.warn('ML Service unreachable, using rule-based fraud detection.')
     }
 
-    await supabase.from('claims').insert({
+    const { data: newClaim } = await supabase.from('claims').insert({
       worker_id: worker.id,
       policy_id: policy.id,
       event_id: event.id,
@@ -144,6 +171,30 @@ export async function initiateClaims(event) {
       payout_reference: status === 'auto_approved'
         ? `UPI-MOCK-${Date.now()}-${worker.id.slice(0, 8)}`
         : null
-    })
+    }).select().single()
+
+    // Fire WhatsApp-style notification
+    const eventLabel = (event.event_type || 'disruption').replace(/_/g, ' ')
+    if (status === 'auto_approved') {
+      await createNotification({
+        worker_id: worker.id,
+        type: 'whatsapp',
+        event_type: event.event_type,
+        title: `⚡ Payout Approved — ₹${event.fixed_payout}`,
+        body: `*GigShield Alert* \n\nYour claim for *${eventLabel}* in zone ${worker.zone_code} has been *auto-approved*. \n\n⚡ ₹${event.fixed_payout} will be credited to your UPI. \n\nNo action needed. Stay safe. 🛡️`,
+        amount_inr: event.fixed_payout,
+        claim_id: newClaim?.id ?? null,
+      })
+    } else if (status === 'flagged') {
+      await createNotification({
+        worker_id: worker.id,
+        type: 'whatsapp',
+        event_type: event.event_type,
+        title: `⚠️ Claim Under Review`,
+        body: `*GigShield Alert* \n\nYour claim for *${eventLabel}* is currently under manual review. \n\nReason: ${fraud_reason}. \n\nWe'll update you within 24 hours.`,
+        amount_inr: null,
+        claim_id: newClaim?.id ?? null,
+      })
+    }
   }
 }

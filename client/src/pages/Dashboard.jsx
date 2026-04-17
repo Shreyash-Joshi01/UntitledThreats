@@ -64,7 +64,12 @@ function DashboardInner() {
     }
   };
 
-  useEffect(() => { fetchDashboardData(); }, []);
+  useEffect(() => {
+    fetchDashboardData();
+    // Auto-refresh every 30 seconds (keeps live env, claims, notifications in sync)
+    const interval = setInterval(() => fetchDashboardData(true), 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ─── KYC submit ────────────────────────────────────────────────────────────
   const submitKYC = async () => {
@@ -224,6 +229,7 @@ function DashboardInner() {
               <div className="space-y-6 pt-2">
                 <ClaimsTimeline
                   claims={data?.claims ?? []}
+                  notifications={data?.notifications ?? []}
                   currentEnv={data?.current_env ?? {}}
                   onClaimUpdate={() => fetchDashboardData(true)}
                 />

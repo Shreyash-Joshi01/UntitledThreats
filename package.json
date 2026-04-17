@@ -6,12 +6,20 @@
     "client",
     "server"
   ],
+  "type": "module",
   "scripts": {
     "dev:client": "npm run dev --workspace=client",
     "dev:server": "npm run dev --workspace=server",
-    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\""
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "simulate": "node scripts/simulate_demo_flow.js",
+    "simulate:fraud": "node scripts/simulate_demo_flow.js --scenario fraud",
+    "simulate:heat": "node scripts/simulate_demo_flow.js --scenario heat",
+    "simulate:heavy": "node scripts/simulate_demo_flow.js --scenario heavy",
+    "simulate:aqi": "node scripts/simulate_demo_flow.js --scenario aqi"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "@supabase/supabase-js": "^2.103.2",
+    "concurrently": "^8.2.0",
+    "dotenv": "^17.4.2"
   }
 }

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle2, XCircle, AlertTriangle, MessageCircle, ChevronDown, ChevronUp, CloudRain } from 'lucide-react';
-import { claimsAPI } from '../../services/api';
+import { claimsAPI, payoutAPI } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from './LangContext';
+import PayoutTracker from './PayoutTracker';
 
 // ─── Error Boundary ───────────────────────────────────────────────────────────
 class ErrorBoundary extends React.Component {
@@ -87,22 +88,41 @@ function HowItWorksMessage({ t }) {
 }
 
 // ─── WhatsApp Simulation ──────────────────────────────────────────────────────
-function WhatsAppSimulation({ currentEnv, hasClaims }) {
+function WhatsAppSimulation({ currentEnv, hasClaims, notifications = [] }) {
   const { t, lang } = useLang();
   const safeEnv = currentEnv || {};
-  const liveIntensity = Number(safeEnv?.rain_intensity ?? safeEnv?.rainfall_mm ?? 12.4);
+  const liveIntensity = Number(safeEnv?.rain_intensity ?? safeEnv?.rainfall_mm ?? 0);
   const isTriggered = liveIntensity >= 35;
 
   const [expanded, setExpanded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(1);
-  const [messages, setMessages] = useState(() => buildMessages(safeEnv, t));
 
-  // Rebuild messages when language or weather changes
+  // Prefer real notifications from server, fall back to mock
+  const hasRealNotifs = notifications && notifications.length > 0;
+  const [messages, setMessages] = useState(() =>
+    hasRealNotifs
+      ? notifications.map((n, i) => ({
+          id: n.id || i,
+          time: new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          text: n.body,
+        }))
+      : buildMessages(safeEnv, t)
+  );
+
+  // Rebuild messages when notifications, language or weather changes
   useEffect(() => {
-    setMessages(buildMessages(safeEnv, t));
+    if (notifications && notifications.length > 0) {
+      setMessages(notifications.map((n, i) => ({
+        id: n.id || i,
+        time: new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        text: n.body,
+      })));
+    } else {
+      setMessages(buildMessages(safeEnv, t));
+    }
     setExpanded(false);
     setVisibleCount(1);
-  }, [lang, currentEnv]);
+  }, [lang, currentEnv, notifications]);
 
   const handleExpand = () => {
     setExpanded(true);
@@ -117,6 +137,11 @@ function WhatsAppSimulation({ currentEnv, hasClaims }) {
         <MessageCircle className="w-4 h-4 text-[#25D366]" />
         <h3 className="font-heading font-semibold text-on-surface">{t.waAlerts}</h3>
         <span className="text-[10px] bg-[#25D366]/15 text-[#25D366] font-bold px-2 py-0.5 rounded-full">LIVE</span>
+        {hasRealNotifs && (
+          <span className="text-[10px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full ml-1">
+            {notifications.length} alert{notifications.length !== 1 ? 's' : ''}
+          </span>
+        )}
         <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${isTriggered ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
           <CloudRain className="w-3 h-3" />
           {liveIntensity.toFixed(1)} mm/hr
@@ -132,14 +157,14 @@ function WhatsAppSimulation({ currentEnv, hasClaims }) {
             <p className="text-white/70 text-[10px]">{t.waSubtitle}</p>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className={`w-2 h-2 rounded-full animate-pulse ${isTriggered ? 'bg-red-400' : 'bg-[#25D366]'}`} />
-            <span className="text-white/70 text-[10px]">{isTriggered ? t.waAlertActive : t.waMonitoring}</span>
+            <div className={`w-2 h-2 rounded-full animate-pulse ${isTriggered || hasRealNotifs ? 'bg-red-400' : 'bg-[#25D366]'}`} />
+            <span className="text-white/70 text-[10px]">{isTriggered ? t.waAlertActive : hasRealNotifs ? 'Alert Active' : t.waMonitoring}</span>
           </div>
         </div>
 
         {/* Chat area */}
         <div className="bg-[#ECE5DD] p-3 space-y-3 min-h-[80px]">
-          {!hasClaims && !isTriggered ? (
+          {!hasClaims && !isTriggered && !hasRealNotifs ? (
             <HowItWorksMessage t={t} />
           ) : !expanded ? (
             <div>
@@ -195,8 +220,11 @@ function WhatsAppSimulation({ currentEnv, hasClaims }) {
 }
 
 // ─── Inner ClaimsTimeline ─────────────────────────────────────────────────────
-function ClaimsTimelineInner({ claims, currentEnv, onClaimUpdate }) {
+function ClaimsTimelineInner({ claims, notifications = [], currentEnv, onClaimUpdate }) {
   const { t } = useLang();
+  const [payoutStatus, setPayoutStatus] = useState({});  // claimId → 'PENDING'|'INITIATED'|'CREDITED'
+  const [payoutLoading, setPayoutLoading] = useState({});
+  const [payoutError, setPayoutError] = useState({});
 
   const handleAppeal = async (id) => {
     try {
@@ -204,6 +232,52 @@ function ClaimsTimelineInner({ claims, currentEnv, onClaimUpdate }) {
       if (onClaimUpdate) onClaimUpdate();
     } catch (err) {
       alert('Failed to submit appeal. Try again later.');
+    }
+  };
+
+  const handleInitiatePayout = async (claimId, amount) => {
+    setPayoutLoading(l => ({ ...l, [claimId]: true }));
+    setPayoutError(e => ({ ...e, [claimId]: null }));
+    try {
+      // Step 1: Create Razorpay order from backend
+      const orderData = await payoutAPI.createOrder(claimId, amount);
+      if (!orderData?.data) throw new Error('Failed to create payout order');
+
+      const { order_id, amount: orderAmount, currency, razorpay_key } = orderData.data;
+
+      // Step 2: Open Razorpay checkout widget (Test Mode)
+      const rzp = new window.Razorpay({
+        key: razorpay_key,
+        amount: orderAmount,
+        currency,
+        name: 'GigShield',
+        description: `Claim Payout`,
+        order_id,
+        handler: async (response) => {
+          // Step 3: Verify signature on backend
+          try {
+            await payoutAPI.verify(
+              response.razorpay_order_id,
+              response.razorpay_payment_id,
+              response.razorpay_signature,
+              claimId
+            );
+            setPayoutStatus(s => ({ ...s, [claimId]: 'CREDITED' }));
+          } catch {
+            setPayoutError(e => ({ ...e, [claimId]: 'Payment verification failed. Contact support.' }));
+          }
+        },
+        theme: { color: '#6366F1' },
+        modal: { ondismiss: () => setPayoutLoading(l => ({ ...l, [claimId]: false })) },
+        // Test UPI: success@razorpay or failure@razorpay
+      });
+
+      setPayoutStatus(s => ({ ...s, [claimId]: 'INITIATED' }));
+      rzp.open();
+    } catch (err) {
+      setPayoutError(e => ({ ...e, [claimId]: err.message || 'Payout failed. Try again.' }));
+    } finally {
+      setPayoutLoading(l => ({ ...l, [claimId]: false }));
     }
   };
 
@@ -224,7 +298,7 @@ function ClaimsTimelineInner({ claims, currentEnv, onClaimUpdate }) {
 
   return (
     <div className="mb-8">
-      <WhatsAppSimulation currentEnv={currentEnv || {}} hasClaims={hasClaims} />
+      <WhatsAppSimulation currentEnv={currentEnv || {}} hasClaims={hasClaims} notifications={notifications} />
 
       <h3 className="font-heading font-semibold text-on-surface mb-4 px-1">{t.recentIncidents}</h3>
 
@@ -264,6 +338,18 @@ function ClaimsTimelineInner({ claims, currentEnv, onClaimUpdate }) {
                       </button>
                     )}
                   </div>
+                  {claim.status === 'auto_approved' && (
+                    <div className="mt-3">
+                      <PayoutTracker
+                        claimId={claim.id}
+                        amount={claim.payout_amount}
+                        status={payoutStatus[claim.id] || (claim.payout_reference && !claim.payout_reference.startsWith('UPI-MOCK') ? 'CREDITED' : 'PENDING')}
+                        onInitiate={handleInitiatePayout}
+                        loading={payoutLoading[claim.id] || false}
+                        error={payoutError[claim.id]}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             );

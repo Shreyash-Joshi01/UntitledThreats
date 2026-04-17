@@ -24,7 +24,7 @@ export default function AdminDashboard() {
     async function loadDashboard() {
       try {
         const response = await adminAPI.getDashboard();
-        setData(response);
+        setData(response.data);
       } catch (err) {
         setError(err.message);
       } finally {

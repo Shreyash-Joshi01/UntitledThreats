@@ -53,6 +53,10 @@ export const dashboardAPI = {
   getAdmin: () => request('/dashboard/admin'),
 };
 
+export const adminAPI = {
+  getDashboard: () => request('/admin/dashboard'),
+};
+
 export const geocodeAPI = {
   reverse: (lat, lng) => request(`/geocode/reverse?lat=${lat}&lng=${lng}`),
 };

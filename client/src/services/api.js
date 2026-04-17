@@ -94,6 +94,11 @@ export const triggersAPI = {
   getActive: (zone_code) => request(`/triggers/active?zone_code=${zone_code}`),
 };
 
+export const adminAPI = {
+  getDashboard: () => request('/admin/dashboard'),
+  simulateFraud: (payload) => request('/admin/simulate/fraud', { method: 'POST', body: JSON.stringify(payload) }),
+  simulatePremium: (payload) => request('/admin/simulate/premium', { method: 'POST', body: JSON.stringify(payload) }),
+  simulateRisk: (payload) => request('/admin/simulate/risk', { method: 'POST', body: JSON.stringify(payload) }),
 export const payoutAPI = {
   createOrder: (claim_id, amount_inr) => request('/payout/create-order', {
     method: 'POST', body: JSON.stringify({ claim_id, amount_inr })

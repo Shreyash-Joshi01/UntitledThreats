@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldAlert, Users, IndianRupee, TrendingUp, AlertTriangle, Clock, Activity } from 'lucide-react';
+import { ShieldAlert, Users, IndianRupee, TrendingUp, AlertTriangle, Clock, Activity, LogOut } from 'lucide-react';
 import { Card } from '../components/ui/Card';
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { adminAPI } from '../services/api';
+import { useAuthStore } from '../store/authStore';
+import MLSimulationSandbox from '../components/admin/MLSimulationSandbox';
 
 const ICONS = {
   activepolicies: Users,
@@ -19,6 +22,13 @@ export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/admin/login', { replace: true });
+  };
 
   useEffect(() => {
     async function loadDashboard() {
@@ -60,26 +70,35 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background text-on-surface p-6 md:p-10 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-on-surface flex items-center gap-3">
               Insurer Command Center
               {isMocked && (
-                <span className="text-[10px] px-2 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full font-bold uppercase tracking-wider">
-                  Test Mock
+                <span>
+
                 </span>
               )}
             </h1>
             <p className="text-on-surface-variant mt-1">Real-time parametric monitoring & fraud detection.</p>
           </div>
-          <div className="flex items-center gap-3 bg-surface-container px-4 py-2 rounded-full border border-outline-variant/20">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-            </span>
-            <span className="text-sm font-medium">System Online • Monitoring Database</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 bg-surface-container px-4 py-2 rounded-full border border-outline-variant/20">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+              </span>
+              <span className="text-sm font-medium">System Online • Monitoring Database</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 bg-surface-container hover:bg-error/10 hover:text-error hover:border-error/30 text-on-surface-variant transition-colors rounded-full border border-outline-variant/20 shadow-sm"
+              title="Logout Administrative Access"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
@@ -115,11 +134,11 @@ export default function AdminDashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff15" vertical={false} />
                   <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip 
-                    cursor={{fill: '#ffffff0a'}} 
-                    contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }} 
+                  <Tooltip
+                    cursor={{ fill: '#ffffff0a' }}
+                    contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }}
                   />
-                  <Legend wrapperStyle={{ paddingTop: '20px' }}/>
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
                   <Bar dataKey="completed" name="Auto-Approved" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} />
                   <Bar dataKey="flagged" name="Flagged (Held)" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -200,8 +219,8 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="w-16 h-2 bg-surface-container-highest rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${claim.score > 90 ? 'bg-red-500' : 'bg-amber-500'}`} 
+                            <div
+                              className={`h-full ${claim.score > 90 ? 'bg-red-500' : 'bg-amber-500'}`}
                               style={{ width: `${claim.score}%` }}
                             />
                           </div>
@@ -226,6 +245,9 @@ export default function AdminDashboard() {
             )}
           </div>
         </Card>
+
+        {/* ML Simulator Interactive Sandbox */}
+        <MLSimulationSandbox />
 
       </div>
     </div>

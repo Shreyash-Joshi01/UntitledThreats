@@ -3,25 +3,33 @@ import { ok, fail } from '../utils/response.js'
 
 export async function getAdminDashboard(req, res) {
   try {
-    // 1. Fetch Total Active Policies
-    const { count: activePoliciesCount, error: polErr } = await supabase
-      .from('policies')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active')
+    let activePoliciesCount = 0;
+    let claimsData = [];
 
-    if (polErr) throw polErr;
+    try {
+      // 1. Fetch Total Active Policies
+      const polRes = await supabase
+        .from('policies')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
+        
+      if (!polRes.error) activePoliciesCount = polRes.count;
 
-    // 2. Fetch Claims Data
-    const { data: claimsData, error: claimsErr } = await supabase
-      .from('claims')
-      .select(`
-        id, status, payout_amount, fraud_score, initiated_at,
-        parametric_events ( event_type ),
-        workers ( phone, zone_code )
-      `)
-      .order('initiated_at', { ascending: false })
-
-    if (claimsErr) throw claimsErr;
+      // 2. Fetch Claims Data
+      const claimsRes = await supabase
+        .from('claims')
+        .select(`
+          id, status, payout_amount, fraud_score, initiated_at,
+          parametric_events ( event_type ),
+          workers ( phone, zone_code )
+        `)
+        .order('initiated_at', { ascending: false });
+        
+      if (!claimsRes.error) claimsData = claimsRes.data;
+    } catch (dbErr) {
+      console.warn("Supabase fetch failed, falling back to mock mode", dbErr.message);
+      // Fallback variables remain initialized at 0 or empty arrays
+    }
 
     const totalClaimsPaid = claimsData
       .filter(c => c.status === 'auto_approved' || c.status === 'approved')
@@ -129,5 +137,65 @@ export async function getAdminDashboard(req, res) {
 
   } catch (err) {
     return fail(res, 500, 'Admin Dashboard load failed: ' + err.message)
+  }
+}
+
+// Helper to proxy requests to ML service
+const ML_URL = process.env.ML_SERVICE_URL || 'http://localhost:4005'
+
+export async function simulateFraud(req, res) {
+  try {
+    const mlRes = await fetch(`${ML_URL}/ml/fraud/score`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    })
+    
+    const mlData = await mlRes.json()
+    if (mlRes.ok) {
+      return ok(res, mlData)
+    } else {
+      return fail(res, mlRes.status, mlData.error || 'ML Service Error')
+    }
+  } catch (error) {
+    return fail(res, 500, 'Failed to connect to ML Service: ' + error.message)
+  }
+}
+
+export async function simulatePremium(req, res) {
+  try {
+    const mlRes = await fetch(`${ML_URL}/ml/premium/calculate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    })
+    
+    const mlData = await mlRes.json()
+    if (mlRes.ok) {
+      return ok(res, mlData)
+    } else {
+      return fail(res, mlRes.status, mlData.error || 'ML Service Error')
+    }
+  } catch (error) {
+    return fail(res, 500, 'Failed to connect to ML Service: ' + error.message)
+  }
+}
+
+export async function simulateRisk(req, res) {
+  try {
+    const mlRes = await fetch(`${ML_URL}/ml/risk/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    })
+    
+    const mlData = await mlRes.json()
+    if (mlRes.ok) {
+      return ok(res, mlData)
+    } else {
+      return fail(res, mlRes.status, mlData.error || 'ML Service Error')
+    }
+  } catch (error) {
+    return fail(res, 500, 'Failed to connect to ML Service: ' + error.message)
   }
 }

@@ -1,5 +1,5 @@
 import express from 'express'
-import { getAdminDashboard } from '../controllers/admin.controller.js'
+import { getAdminDashboard, simulateFraud, simulatePremium, simulateRisk } from '../controllers/admin.controller.js'
 import { requireAuth } from '../middleware/auth.middleware.js'
 
 const router = express.Router()

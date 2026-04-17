@@ -88,3 +88,7 @@ export const premiumAPI = {
 export const triggersAPI = {
   getActive: (zone_code) => request(`/triggers/active?zone_code=${zone_code}`),
 };
+
+export const adminAPI = {
+  getDashboard: () => request('/admin/dashboard'),
+};

@@ -497,7 +497,7 @@ Based on the recent integrations across the codebase, the following systems and 
 ## 14. Pitch Deck
 
 
-**Pitch Deck Link:** [https://drive.google.com/file/d/1ANFCjML-ZJG2a68rLPYyT_IJEijHgMW8/view?usp=sharing]
+**Pitch Deck Link:** [https://docs.google.com/presentation/d/1jBB9BjWV1NixYTOtBPLWH5yVSLcAbXww/edit?usp=sharing&ouid=104065102102144219163&rtpof=true&sd=true]
 
 The presentation deck detailing the problem, solution, tech stack, and Phase 3 deliverables can be viewed via the link above. The raw Markdown structure for the deck is available in the repository at [`docs/Pitch_Deck_Content.md`](docs/Pitch_Deck_Content.md).
 

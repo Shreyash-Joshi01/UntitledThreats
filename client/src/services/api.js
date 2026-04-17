@@ -91,4 +91,7 @@ export const triggersAPI = {
 
 export const adminAPI = {
   getDashboard: () => request('/admin/dashboard'),
+  simulateFraud: (payload) => request('/admin/simulate/fraud', { method: 'POST', body: JSON.stringify(payload) }),
+  simulatePremium: (payload) => request('/admin/simulate/premium', { method: 'POST', body: JSON.stringify(payload) }),
+  simulateRisk: (payload) => request('/admin/simulate/risk', { method: 'POST', body: JSON.stringify(payload) }),
 };

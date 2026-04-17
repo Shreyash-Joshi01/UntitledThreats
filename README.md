@@ -17,6 +17,11 @@
 10. [6-Week Development Plan](#10-6-week-development-plan)
 11. [Repository Structure](#11-repository-structure)
 12. [Regulatory Positioning](#12-regulatory-positioning)
+13. [Current Working Features & Implemented Modules](#13-current-working-features--implemented-modules)
+14. [Pitch Deck](#pitch-deck)
+
+
+
 
 ---
 
@@ -471,4 +476,32 @@ For the purposes of this prototype, Untitled Threats operates as a **proof-of-co
 
 ---
 
- *Untitled Threats - Guidewire DEVTrails 2026 | Phase 1 Submission*
+## 13. Current Working Features & Implemented Modules
+
+Based on the recent integrations across the codebase, the following systems and features are fully functional:
+
+- **Frontend Core & Client Dashboard**:
+  - Real-time `EnvironmentMonitor` module functioning and displaying live triggers.
+  - Payout Tracker flow accurately tracking and updating claim statuses.
+  - Unified UI components (e.g., modern `Card.jsx` system) serving the dashboard.
+- **Backend APIs & Routing Systems**:
+  - Core service routes are live (`policy.routes.js`, `worker.routes.js`, `admin.routes.js`).
+  - Active admin endpoints effectively supporting environment simulation (`simulateFraud`, `simulateRisk`, `simulatePremium`).
+  - Real-time WhatsApp/notification integration for rapid worker alerts upon parametric zone triggers.
+- **AI/ML Service Container**:
+  - Python-based ML microservice attached to the Node.js backend to provide real-time profiling.
+  - Deployed models actively evaluating fraud risk, baseline premium adjustments, and generating predictive risk scores.
+
+---
+
+## Pitch Deck
+
+
+**Pitch Deck Link:** [Insert Drive/Platform Link Here]
+
+The presentation deck detailing the problem, solution, tech stack, and Phase 3 deliverables can be viewed via the link above. The raw Markdown structure for the deck is available in the repository at [`docs/Pitch_Deck_Content.md`](docs/Pitch_Deck_Content.md).
+
+---
+
+ *Untitled Threats - Guidewire DEVTrails 2026 | Phase 3 Submission*
+

@@ -217,6 +217,7 @@ function DashboardInner() {
                   onPolicyUpdate={() => fetchDashboardData(true)}
                   worker={data?.worker}
                   payoutTiers={data?.payout_tiers}
+                  premiumData={data?.premium}
                 />
                 <EarningsProtected stats={data?.earnings} />
                 <PayoutTiers tiers={data?.payout_tiers} />

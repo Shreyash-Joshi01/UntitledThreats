@@ -6,10 +6,12 @@ export const useAuthStore = create(
     (set) => ({
       user: null,
       token: null,
+      isAdmin: false,
       
       setSession: (user, token) => set({ user, token }),
-      clearSession: () => set({ user: null, token: null }),
-      logout: () => set({ user: null, token: null }),
+      setAdminAuth: (status) => set({ isAdmin: status }),
+      clearSession: () => set({ user: null, token: null, isAdmin: false }),
+      logout: () => set({ user: null, token: null, isAdmin: false }),
     }),
     {
       name: 'untitled-threats-auth-storage', // name of item in localStorage (must be unique)

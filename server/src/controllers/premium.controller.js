@@ -29,7 +29,7 @@ export async function calculatePremium(req, res) {
         zone_code: zone_code || worker?.zone_code,
         weekly_hours: parseFloat(weekly_hours || worker?.weekly_hours || 40),
         season,
-        claim_history_count
+        claim_history: claim_history_count
       }),
       signal: AbortSignal.timeout(5000)
     })
